@@ -6,8 +6,8 @@ import numpy as np
 ##############################
 
 arcpy.env.workspace = r"D:\02_ServicesPublies\DASHBOARD_IncendiesVIIRS\ALERTE_INCENDIE_v2.sde"
-IncendiesVIIRS = "ALERTE_INCENDIE_v2.DBO.incendies_VIIRS"
-champs = ["BegDate", "superf_ha"]
+IncendiesVIIRS = "ALERTE_INCENDIE_v2.dbo.DashboardVIIRSAdministratif"
+champs = ["Debut", "SuperficieHa", "Nom"]
 
 ##############################
 
@@ -39,13 +39,13 @@ def calcul_moy_par_jour(annees, sortedVIIRS_Prov_c, dates_c, initstr):
 ###################################
 # On récupère les données dans la couche viirs pour chaque province
 donneesVIIRS_Sud = [list(l) for l in arcpy.da.SearchCursor(IncendiesVIIRS, champs,\
-    where_clause="Nom = 'Province Sud' AND BegDate >= '2013-01-01' AND BegDate < '" + dt.datetime.strftime(date_fin, "%Y-%m-%d") + "'")]
+    where_clause="Nom = 'Province Sud' AND Debut >= '2013-01-01' AND Debut < '" + dt.datetime.strftime(date_fin, "%Y-%m-%d") + "'")]
 sortedVIIRS_Sud = sorted(donneesVIIRS_Sud, key= lambda x: int(dt.datetime.strftime(x[0], "%m%d%Y")))
 donneesVIIRS_Nord = [list(l) for l in arcpy.da.SearchCursor(IncendiesVIIRS, champs,\
-    where_clause="Nom = 'Province Nord' AND BegDate >= '2013-01-01' AND BegDate < '" + dt.datetime.strftime(date_fin, "%Y-%m-%d") + "'")]
+    where_clause="Nom = 'Province Nord' AND Debut >= '2013-01-01' AND Debut < '" + dt.datetime.strftime(date_fin, "%Y-%m-%d") + "'")]
 sortedVIIRS_Nord = sorted(donneesVIIRS_Nord, key= lambda x: int(dt.datetime.strftime(x[0], "%m%d%Y")))
 donneesVIIRS_Iles = [list(l) for l in arcpy.da.SearchCursor(IncendiesVIIRS, champs,\
-    where_clause="Nom = 'Province des Iles' AND BegDate >= '2013-01-01' AND BegDate < '" + dt.datetime.strftime(date_fin, "%Y-%m-%d") + "'")]
+    where_clause="Nom = 'Province des Iles' AND Debut >= '2013-01-01' AND Debut < '" + dt.datetime.strftime(date_fin, "%Y-%m-%d") + "'")]
 sortedVIIRS_Iles = sorted(donneesVIIRS_Iles, key= lambda x: int(dt.datetime.strftime(x[0], "%m%d%Y")))
 
 # avgs = np.array([], np.dtype([("Date", np.datetime64), ("Valeur", np.int32), ("Province", np.string)]))
@@ -55,12 +55,26 @@ for jour in range(1, 367):
     dates.append(dt.datetime.strptime("{:03}".format(jour) + "/" + str(2020), "%j/%Y")) ## Année bissextile au hasard
     
 print("Longueur de dates : {}\nLongueur de sortedVIIRS_Sud : {}\n".format(len(dates), len(sortedVIIRS_Sud)))
+print("Longueur de dates : {}\nLongueur de sortedVIIRS_Nord : {}\n".format(len(dates), len(sortedVIIRS_Nord)))
+print("Longueur de dates : {}\nLongueur de sortedVIIRS_Iles : {}\n".format(len(dates), len(sortedVIIRS_Iles)))
 
 init = dates.pop(0)
 initstr = dt.datetime.strftime(init, "%m%d")
 
 dico_Sud = calcul_moy_par_jour(annees, sortedVIIRS_Sud, dates, initstr)
+dates = []
+for jour in range(1, 367):
+    dates.append(dt.datetime.strptime("{:03}".format(jour) + "/" + str(2020), "%j/%Y")) ## Année bissextile au hasard
+init = dates.pop(0)
+initstr = dt.datetime.strftime(init, "%m%d")
+print("Longueur de dates : {}".format(len(dates)))
 dico_Nord = calcul_moy_par_jour(annees, sortedVIIRS_Nord, dates, initstr)
+dates = []
+for jour in range(1, 367):
+    dates.append(dt.datetime.strptime("{:03}".format(jour) + "/" + str(2020), "%j/%Y")) ## Année bissextile au hasard
+init = dates.pop(0)
+initstr = dt.datetime.strftime(init, "%m%d")
+print("Longueur de dates : {}".format(len(dates)))
 dico_Iles = calcul_moy_par_jour(annees, sortedVIIRS_Iles, dates, initstr)
 
 # Un = Sn + Un-1, Sn étant le moyenne pour le jour n
@@ -87,7 +101,7 @@ for item in dico_Nord:
         datestr+=str(current_annee)
         date=dt.datetime.strptime(datestr, "%m%d%Y")
         npdate = np.datetime64(date)
-        summedListNord.append((npdate, surface + lastS, "Province Sud"))
+        summedListNord.append((npdate, surface + lastS, "Province Nord"))
 
 temp = dico_Iles.pop(0)
 summedListIles = [(np.datetime64(dt.datetime.strptime(temp[0] + str(current_annee), "%m%d%Y")), temp[1], "Province des Iles")]
@@ -99,14 +113,14 @@ for item in dico_Iles:
         datestr+=str(current_annee)
         date=dt.datetime.strptime(datestr, "%m%d%Y")
         npdate = np.datetime64(date)
-        summedListIles.append((npdate, surface + lastS, "Province Sud"))
+        summedListIles.append((npdate, surface + lastS, "Province des Iles"))
 
 # On concatène les trois listes
-npdt = np.dtype([('date', 'datetime64[us]'), ('S', np.float64), ('Province', np.string)])
+npdt = np.dtype([('date', 'datetime64[us]'), ('S', np.float64), ('Province', 'a64')])
 array = np.array(summedListSud + summedListNord + summedListIles, dtype=npdt)
 # print("OK")
-# print(array.dtype)
+print(array)
 arcpy.env.workspace = r"D:\02_ServicesPublies\DASHBOARD_IncendiesVIIRS\Vulcain_DASHBOARD.gdb"
-arcpy.Delete_management(r"D:\02_ServicesPublies\DASHBOARD_IncendiesVIIRS\Vulcain_DASHBOARD.gdb\Avg_Superficie")
 arcpy.Delete_management("Avg_Superficie")
+arcpy.Delete_management(r"D:\02_ServicesPublies\DASHBOARD_IncendiesVIIRS\Vulcain_DASHBOARD.gdb\Avg_Superficie")
 arcpy.da.NumPyArrayToTable(array, r"D:\02_ServicesPublies\DASHBOARD_IncendiesVIIRS\Vulcain_DASHBOARD.gdb\Avg_Superficie")
