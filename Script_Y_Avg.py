@@ -22,18 +22,29 @@ date_fin = dt.datetime(current_annee, 1, 1)
 
 
 def calcul_moy_par_jour(annees, sortedVIIRS_Prov_c, dates_c, initstr):
+    '''Calcul la valeur moyenne de la surface incendiée chaque jour de l'année'''
     dico = [] 
     som = 0
     dates = dates_c  # .pop est impossible sur un argument
     sortedVIIRS_Prov = sortedVIIRS_Prov_c
     while len(sortedVIIRS_Prov) > 0 and len(dates) > 0:
         if dt.datetime.strftime(sortedVIIRS_Prov[0][0], "%m%d") == initstr:
-            som += sortedVIIRS_Prov.pop(0)[1]
+            som += sortedVIIRS_Prov.pop(0)[1]  # La liste est classée par mois, puis par jour, puis par année
         else:
             dico.append([initstr, som/len(annees)])
             init = dates.pop(0)
             initstr = dt.datetime.strftime(init, "%m%d")
             som = 0
+    while len(dates) > 0:
+        init = dates.pop(0)
+        initstr = dt.datetime.strftime(init, "%m%d")
+        dico.append([initstr, 0])
+        som = 0
+    while len(sortedVIIRS_Prov) > 0:
+        if dt.datetime.strftime(sortedVIIRS_Prov[0][0], "%m%d") == initstr:
+            som += sortedVIIRS_Prov.pop(0)[1]
+    if som != 0:
+        dico.append([initstr, som/len(annees)])
     return dico
 
 ###################################
@@ -62,30 +73,34 @@ init = dates.pop(0)
 initstr = dt.datetime.strftime(init, "%m%d")
 
 dico_Sud = calcul_moy_par_jour(annees, sortedVIIRS_Sud, dates, initstr)
+
 dates = []
 for jour in range(1, 367):
     dates.append(dt.datetime.strptime("{:03}".format(jour) + "/" + str(2020), "%j/%Y")) ## Année bissextile au hasard
 init = dates.pop(0)
 initstr = dt.datetime.strftime(init, "%m%d")
 print("Longueur de dates : {}".format(len(dates)))
+
 dico_Nord = calcul_moy_par_jour(annees, sortedVIIRS_Nord, dates, initstr)
+
 dates = []
 for jour in range(1, 367):
     dates.append(dt.datetime.strptime("{:03}".format(jour) + "/" + str(2020), "%j/%Y")) ## Année bissextile au hasard
 init = dates.pop(0)
 initstr = dt.datetime.strftime(init, "%m%d")
 print("Longueur de dates : {}".format(len(dates)))
+
 dico_Iles = calcul_moy_par_jour(annees, sortedVIIRS_Iles, dates, initstr)
 
-# Un = Sn + Un-1, Sn étant le moyenne pour le jour n
+# Un = Sn + Un-1, Sn étant la moyenne pour le jour n
 # U0 = S0
 temp = dico_Sud.pop(0)
 summedListSud = [(np.datetime64(dt.datetime.strptime(temp[0] + str(current_annee), "%m%d%Y")), temp[1], "Province Sud")]
 for item in dico_Sud:
     datestr = item[0]
-    surface = item[1]
-    lastS = summedListSud[-1][1]
-    if datestr != "0229":
+    surface = item[1]  # Sn
+    lastS = summedListSud[-1][1]  # Un-1
+    if datestr != "0229":  # Année bisextile
         datestr+=str(current_annee)
         date=dt.datetime.strptime(datestr, "%m%d%Y")
         npdate = np.datetime64(date)
