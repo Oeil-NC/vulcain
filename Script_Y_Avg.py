@@ -92,7 +92,7 @@ summedListSud = moyenne_cumulee(current_annee, dico_Sud, summedListSud, "Provinc
 
 temp = dico_Nord.pop(0)
 summedListNord = [(np.datetime64(dt.datetime.strptime(temp[0] + str(current_annee), "%m%d%Y")), temp[1], "Province Nord")]
-summedListSud = moyenne_cumulee(current_annee, dico_Nord, summedListNord, "Province Nord")
+summedListNord = moyenne_cumulee(current_annee, dico_Nord, summedListNord, "Province Nord")
 
 temp = dico_Iles.pop(0)
 summedListIles = [(np.datetime64(dt.datetime.strptime(temp[0] + str(current_annee), "%m%d%Y")), temp[1], "Province des Iles")]
