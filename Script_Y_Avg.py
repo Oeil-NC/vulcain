@@ -25,9 +25,10 @@ def calcul_moy_par_jour(annees, sortedVIIRS_Prov, dates):
     som = 0
     for date in dates:
         datestr = dt.datetime.strftime(date, "%m%d")
-        surface_jour = [l[1] for l in sortedVIIRS_Prov if dt.datetime.strftime(l[0], "%m%d") == datestr]
+        surface_jour = [0] + [l[1] for l in sortedVIIRS_Prov if dt.datetime.strftime(l[0], "%m%d") == datestr]
         som = sum(surface_jour)
         dico.append([datestr, som/len(annees)])
+    return dico
 
 def moyenne_cumulee(current_annee, dico, summedList, Province):
     for item in dico:
@@ -38,7 +39,7 @@ def moyenne_cumulee(current_annee, dico, summedList, Province):
             datestr += str(current_annee)
             date = dt.datetime.strptime(datestr, "%m%d%Y")
             npdate = np.datetime64(date)
-            summedListSud.append((npdate, surface + lastS, Province))
+            summedList.append((npdate, surface + lastS, Province))
         except:
             # Si l'année n'est pas bisextile, on saute le 29/02
             print("L'année actuelle n'est pas une année bissextile")
@@ -96,6 +97,10 @@ summedListSud = moyenne_cumulee(current_annee, dico_Nord, summedListNord, "Provi
 temp = dico_Iles.pop(0)
 summedListIles = [(np.datetime64(dt.datetime.strptime(temp[0] + str(current_annee), "%m%d%Y")), temp[1], "Province des Iles")]
 summedListIles = moyenne_cumulee(current_annee, dico_Iles, summedListIles, "Province des Iles")
+
+print("Longueur de summedListSud : {}\n".format(len(summedListSud)))
+print("Longueur de summedListNord : {}\n".format(len(summedListNord)))
+print("Longueur de summedListIles : {}\n".format(len(summedListIles)))
 
 # On concatène les trois listes
 npdt = np.dtype([('date', 'datetime64[us]'), ('S', np.float64), ('Province', 'a64')])
