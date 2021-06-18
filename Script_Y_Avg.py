@@ -42,7 +42,7 @@ def moyenne_cumulee(current_annee, dico, summedList, Province):
             summedList.append((npdate, surface + lastS, Province))
         except:
             # Si l'année n'est pas bisextile, on saute le 29/02
-            print("L'année actuelle n'est pas une année bissextile")
+            print("L'année actuelle n'est pas une année bissextile\n")
             pass
     return summedList
 
